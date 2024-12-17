@@ -1,0 +1,3 @@
+# on tick basis reload chart with new data
+    - insert new data
+    - create tick init
