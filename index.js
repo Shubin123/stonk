@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, globalShortcut} from 'electron';
 import fs from 'fs';
 import path from 'path';
 import { parse } from 'csv-parse';  // Import csv-parse for CSV parsing
@@ -21,7 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 let stock;
 
-
+let mainWindow;
 
 
 // Read and parse the CSV file
@@ -155,7 +155,7 @@ function createWindow() {
   let chart = new Chart("myChart", {
   type: "line",
   data: {
-    // labels: [${String(stock.Date)}],
+    
     datasets: [{
       data: [${String(stock.Open)}],
       borderColor: "blue",
@@ -203,13 +203,27 @@ function createWindow() {
   </html>
 `;
     win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
+    mainWindow = win;
   })  
 
 }
 
 // Electron app lifecycle
 app.whenReady().then(() => {
+  globalShortcut.register('e', () => {
+    
+    mainWindow.focus();
+    console.log("e");
+    mainWindow.webContents.executeJavaScript(`
+      console.log(chart, chart.data.datasets[0].borderColor);
+        
+      chart.data.datasets[0].borderColor = 'red'
+      chart.update();
+
+      `);
+  });
   createWindow();
+
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -220,4 +234,10 @@ app.whenReady().then(() => {
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
   });
+
+
+
+
 });
+
+
