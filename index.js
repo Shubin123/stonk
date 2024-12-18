@@ -79,6 +79,7 @@ function createWindow(page = 'main') {
       <body>
         <h1>Menu Page</h1>
         <button onclick="goToChart()">Go to Stock Chart</button>
+     <button onclick="goToGambling()">Go to Gambling Page</button>
 
 
         <script>
@@ -86,12 +87,20 @@ function createWindow(page = 'main') {
           function goToChart() {
             ipcRenderer.send('navigate-to-main');
           }
+              function goToGambling() {
+            ipcRenderer.send('navigate-to-gambling');
+          }
         </script>
       </body>
       </html>
     `;
     win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(menuContent));
-  } else {
+  } 
+  else if  (page === 'gambling') {
+    // Load the external HTML file
+    win.loadFile(path.join(__dirname, 'mines.html'));
+  }
+  else {
     loadStockData().then(async (data) => {
       const stock = data;
       const htmlContent = `
@@ -241,6 +250,8 @@ win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
 
 }
 
+
+
 // Electron app lifecycle
 app.whenReady().then(() => {
   createWindow('main');
@@ -253,6 +264,12 @@ app.whenReady().then(() => {
   ipcMain.on('navigate-to-main', () => {
     if (mainWindow) mainWindow.close();
     createWindow('main');
+  });
+
+
+  ipcMain.on('navigate-to-gambling', () => {
+    if (mainWindow) mainWindow.close();
+    createWindow('gambling');
   });
 
   ipcMain.on('update-balance', async (event, { amount }) => {
