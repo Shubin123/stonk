@@ -1,243 +1,163 @@
-import { app, BrowserWindow, globalShortcut} from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron';
 import fs from 'fs';
 import path from 'path';
-import { parse } from 'csv-parse';  // Import csv-parse for CSV parsing
-
+import { parse } from 'csv-parse';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-// Enable live-reload for development
-// if (process.env.NODE_ENV === 'development') {
-//   import('electron-reload') // Dynamically import electron-reload only in development
-//     .then((module) => {
-//       module.default(__dirname, {
-//         electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
-//       });
-//     })
-//     .catch((err) => console.error('Error setting up live-reload:', err));
-// }
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-let stock;
-
 let mainWindow;
 
-
-// Read and parse the CSV file
+// Function to load stock data
 function loadStockData() {
   return new Promise((resolve, reject) => {
     const filePath = path.join(__dirname, 'assets', 'APPLE_HistoricalData_1734412988258.csv');
-    
-    const resultsDate = [] ;  // This will hold the parsed CSV rows
-    const resultsLast = [];  // This will hold the parsed CSV rows
-    const resultsVolume = [];  // This will hold the parsed CSV rows
-    const resultsOpen = [];  // This will hold the parsed CSV rows
-    const resultsHigh = [];  // This will hold the parsed CSV rows
-    const resultsLow = [];  // This will hold the parsed CSV rows
+    const resultsDate = [];
+    const resultsLast = [];
+    const resultsVolume = [];
+    const resultsOpen = [];
+    const resultsHigh = [];
+    const resultsLow = [];
 
-    // const results = [];  // This will hold the parsed CSV rows
-    let res;
-
-
-    // Create a readable stream from the CSV file
-    const fileStream = fs.createReadStream(filePath);
-
-    // Parse the CSV file
-    fileStream.pipe(parse({
-      delimiter: ',',   // Delimiter (default is ',')
-      columns: true,     // Convert the CSV rows into objects using the header row
-      skip_empty_lines: true  // Skip empty lines
-    }))
-    .on('data', (row) => {
-
-
-      resultsDate.push(String("'"+ row.Date + "'"));  // Push each row (parsed as an object) into the results array
-      resultsLast.push(row['Close/Last'].slice(1,-1));  // get rid of $ in text
-      resultsVolume.push(row.Volume);  
-      resultsOpen.push(row.Open.slice(1,-1));  
-      resultsHigh.push(row.High.slice(1,-1));  
-      resultsLow.push(row.Low.slice(1,-1));  
-
-      
-
-    })
-    .on('end', () => {
-      res = {
-        Date : resultsDate.reverse(),
-        Last : resultsLast.reverse(),
-        Volume : resultsVolume.reverse(),
-        Open : resultsOpen.reverse(),
-        High : resultsHigh.reverse(),
-        Low : resultsLow.reverse(),
-      }
-
-      resolve(res);  // Resolve the promise with the parsed data when parsing is done
-    })
-    .on('error', (err) => {
-      reject(err);  // Reject the promise if there's an error during parsing
-    });
+    fs.createReadStream(filePath)
+      .pipe(parse({ delimiter: ',', columns: true, skip_empty_lines: true }))
+      .on('data', (row) => {
+        resultsDate.push(`'${row.Date}'`);
+        resultsLast.push(row['Close/Last'].slice(1, -1));
+        resultsVolume.push(row.Volume);
+        resultsOpen.push(row.Open.slice(1, -1));
+        resultsHigh.push(row.High.slice(1, -1));
+        resultsLow.push(row.Low.slice(1, -1));
+      })
+      .on('end', () => {
+        resolve({
+          Date: resultsDate.reverse(),
+          Last: resultsLast.reverse(),
+          Volume: resultsVolume.reverse(),
+          Open: resultsOpen.reverse(),
+          High: resultsHigh.reverse(),
+          Low: resultsLow.reverse(),
+        });
+      })
+      .on('error', reject);
   });
 }
 
-// Create the Electron window
-function createWindow() {
+function createWindow(page = 'main') {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      nodeIntegration: true,  // Allow Node.js integration in the renderer process
-      contextIsolation: false, // Disable context isolation (not recommended for production)
+      nodeIntegration: true, // Allow Node.js integration
+      contextIsolation: false, // Disable context isolation
     },
   });
 
-  // Open DevTools in development mode
-  // if (process.env.NODE_ENV === 'development') {
-    win.webContents.openDevTools();
-  // }
-
-  loadStockData().then((data)=>{
-    // console.log(data)
-    stock = data; // holds sequence datestamped
-
-    // console.log(stock)
-      // Load an HTML string into the window
-  const htmlContent = `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Prices</title>
-   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  </head>
-  <body>
-    <h1>Stock Prices</h1>
-    <table border="1">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Close/Last</th>
-          <th>Volume</th>
-          <th>Open</th>
-          <th>High</th>
-          <th>Low</th>
-        </tr>
-      </thead>
-      <tbody id="stock-data-body">
-        <!-- Stock data rows will be injected here -->
-
-        <td>${stock.Date[0]}</td>
-            <td>${stock.Last[0]}</td>
-            <td>${stock.Volume[0]}</td>
-            <td>${stock.Open[0]}</td>
-            <td>${stock.High[0]}</td>
-            <td>${stock.Low[0]}</td>
-
-
-      </tbody>
-    </table>
-
-<div>
-  <canvas id="myChart"></canvas>
-</div>
-
-    <script>
-  const ctx = document.getElementById('myChart');
-
-
- 
-  ${console.log(String(stock.Date))}
-
-
-
-  let chart = new Chart("myChart", {
-  type: "line",
-  data: {
-    
-    datasets: [{
-      data: [${String(stock.Open)}],
-      borderColor: "blue",
-      fill: false,
-      label: "open price"
-    }
-      
-      ,{
-      data: [${String(stock.Last)}],
-      borderColor: "green",
-      fill: false,
-      label: "closing price"
-    },
-    {
-      data: [${String(stock.Low)}],
-      borderColor: "red",
-      fill: false,
-      label: "low price"
-    }
-      
-    ]
-  },
-  options: {
-    legend: {display: false},
-   scales: {
-            x: {
-                // ticks: {
-                //     // Only show if n'th
-                //     callback: function(value, index, ticks) {
-                //         return index;
-                //     }
-                // },
-                      type: 'category',
-                 labels: [${String(stock.Date)}]
+  if (page === 'gambling') {
+    // Load the external HTML file
+    win.loadFile(path.join(__dirname, 'mines.html'));
+  } else if (page === 'menu') {
+    const menuContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Menu</title>
+      </head>
+      <body>
+        <h1>Menu Page</h1>
+        <button onclick="goToChart()">Go to Stock Chart</button>
+        <button onclick="goToGambling()">Go to Gambling Page</button>
+        <script>
+          const { ipcRenderer } = require('electron');
+          function goToChart() {
+            ipcRenderer.send('navigate-to-main');
+          }
+          function goToGambling() {
+            ipcRenderer.send('navigate-to-gambling');
+          }
+        </script>
+      </body>
+      </html>
+    `;
+    win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(menuContent));
+  } else {
+    // Default to 'main' page
+    loadStockData().then((data) => {
+      const stock = data;
+      const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Stock Prices</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      </head>
+      <body>
+        <h1>Stock Prices</h1>
+        <button onclick="goToMenu()">Go to Menu</button>
+        <canvas id="myChart"></canvas>
+        <script>
+          const ctx = document.getElementById('myChart');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: [${String(stock.Date)}],
+              datasets: [
+                { data: [${String(stock.Open)}], label: 'Open Price', borderColor: 'blue' },
+                { data: [${String(stock.Last)}], label: 'Close Price', borderColor: 'green' },
+                { data: [${String(stock.Low)}], label: 'Low Price', borderColor: 'red' }
+              ]
             }
-        }
+          });
+          const { ipcRenderer } = require('electron');
+          function goToMenu() {
+            ipcRenderer.send('navigate-to-menu');
+          }
+        </script>
+      </body>
+      </html>
+      `;
+      win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
+    });
   }
-});
 
-  
-  
-</script>
-
-  </body>
-  </html>
-`;
-    win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
-    mainWindow = win;
-  })  
-
+  mainWindow = win;
 }
+
 
 // Electron app lifecycle
 app.whenReady().then(() => {
-  globalShortcut.register('e', () => {
-    
-    mainWindow.focus();
-    console.log("e");
-    mainWindow.webContents.executeJavaScript(`
-      console.log(chart, chart.data.datasets[0].borderColor);
-        
-      chart.data.datasets[0].borderColor = 'red'
-      chart.update();
+  createWindow('main');
 
-      `);
+  ipcMain.on('navigate-to-gambling', () => {
+    if (mainWindow) mainWindow.close();
+    createWindow('gambling');
   });
-  createWindow();
-
+  
+  ipcMain.on('navigate-to-main', () => {
+    if (mainWindow) mainWindow.close();
+    createWindow('main');
+  });
+  
+  ipcMain.on('navigate-to-menu', () => {
+    if (mainWindow) mainWindow.close();
+    createWindow('menu');
+  });
+  
+  globalShortcut.register('cmd+e', () => {
+    mainWindow.webContents.executeJavaScript(`
+      chart.data.datasets[0].borderColor = 'red';
+      chart.update();
+    `);
+  });
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+    if (BrowserWindow.getAllWindows().length === 0) createWindow('main');
   });
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
   });
-
-
-
-
 });
-
-
