@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
-    "build-win":  "electron-packager . stonk --platform=win32 --arch=x64 --out=./dist  --overwrite"
+    "build-win":  "electron-packager . stonk --platform=win32 --arch=x64 --out=./dist  --overwrite",
+    "build-mac":  "electron-packager . stonk --platform=darwin --arch=x64 --out=./dist  --overwrite"
+    
   },
   "author": "",
   "license": "ISC",
