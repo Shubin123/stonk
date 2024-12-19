@@ -14,13 +14,12 @@ const __dirname = dirname(__filename);
 let stock;
 let mainWindow;
 
-let username = "kanye"
+let username = "kanye";
 
 let balance = getBalance(username);
-console.log(balance)
-updateBalance(username, 25);
+// console.log(balance);
+// updateBalance(username, 25);
 
-console.log(balance)
 
 // Function to load stock data
 function loadStockData() {
@@ -104,183 +103,157 @@ function createWindow(page = 'main') {
     loadStockData().then(async (data) => {
       const stock = data;
       const htmlContent = `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <title>Stock Prices</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  </head>
-  <body>
-    <h1>Stock Prices</h1>
-    <button onclick="goToMenu()">Go to Menu</button>
-    <div>
-      <p>Current Price: $<span id="currentPrice">0</span></p>
-      <p>Shares Owned: <span id="sharesOwned">0</span></p>
-      <p>Balance: $<span id="balance">${balance}</span></p>
-      <input type="number" id="sharesToBuy" value="1000" />
-      <button onclick="purchaseStock()">Buy Stock</button>
-      <button onclick="sellStock()">Sell Stock</button>
-    </div>
-    <canvas id="myChart"></canvas>
-    <script>
-      const { ipcRenderer } = require('electron');
-      let stonk = ${JSON.stringify(stock)};
-      let sharesOwned = 0;
-      let currentPrice = 0; // Will store the current price of the stock
-      const ctx = document.getElementById('myChart').getContext('2d');
-      
-      const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: stonk.Date,
-          datasets: [
-            { data: stonk.Open, label: 'Open Price', borderColor: 'blue' },
-            { data: stonk.Last, label: 'Close Price', borderColor: 'green' },
-            { data: stonk.Low, label: 'Low Price', borderColor: 'red' }
-          ]
-        }
-      });
-
-      // Update the price in the loop
-      // function updatePrice() {
-      //   currentPrice = stonk.Last[stonk.Last.length - 1];
-      //   document.getElementById('currentPrice').innerText = currentPrice;
-      // }
-
-      function purchaseStock() {
-        const sharesToBuy = parseInt(document.getElementById('sharesToBuy').value, 10);
-        ipcRenderer.send('purchase-stock', { sharesToBuy, price: currentPrice });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stock Prices</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Stock Prices</h1>
+  <button onclick="goToMenu()">Go to Menu</button>
+  <div>
+    <p>Current Price: $<span id="currentPrice">0</span></p>
+    <p>Shares Owned: <span id="sharesOwned">0</span></p>
+    <p>Balance: $<span id="balance">${balance}</span></p>
+    <input type="number" id="sharesToBuy" value="5" />
+    <button onclick="purchaseStock()">Buy Stock</button>
+    <button onclick="sellStock()">Sell Stock</button>
+  </div>
+  <canvas id="myChart"></canvas>
+  <div>
+    <label for="speedSlider">Ticker Speed:</label>
+        <input type="range" id="speedSlider" min="1" max="60" value="2" />
+        <span id="speedValue">10</span> Speed
+    
+    <label for="rangeSlider">View Range:</label>
+    <input type="range" id="rangeSlider" min="1" max="10" value="2" />
+    <span id="rangeValue">2</span> Range
+  </div>
+  <script>
+    const { ipcRenderer } = require('electron');
+    let stonk = ${JSON.stringify(stock)};
+    let sharesOwned = 0;
+    let currentPrice = 0;
+    const ctx = document.getElementById('myChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: stonk.Date,
+        datasets: [
+          { data: stonk.Open, label: 'Open Price', borderColor: 'blue' },
+          { data: stonk.Last, label: 'Close Price', borderColor: 'green' },
+          { data: stonk.Low, label: 'Low Price', borderColor: 'red' }
+        ]
       }
+    });
 
-      function sellStock() {
-        const sharesToSell = parseInt(document.getElementById('sharesToBuy').value, 10);
-        ipcRenderer.send('sell-stock', { sharesToSell, price: currentPrice });
+    let currentIndex = 0;
+    
+    let sliceSize = 10;    
+    let slizeSizeValue = document.getElementById('rangeSlider');
+    const totalDataPoints = stonk.Date.length;
+
+    // Add slider event listener
+    const slider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
+
+    const slice = document.getElementById('rangeSlider');
+    sliceValue = document.getElementById('rangeValue');
+
+    function updatePrice() {
+      console.log(sliceSize);
+      if (currentIndex + sliceSize <= totalDataPoints) {
+        currentPrice = stonk.Last[currentIndex];
+        document.getElementById('currentPrice').innerText = currentPrice;
       }
+    }
 
-      function goToMenu() {
-        ipcRenderer.send('navigate-to-menu');
+    function updateChartData() {
+      const labels = stonk.Date.slice(currentIndex, currentIndex + sliceSize);
+      const openData = stonk.Open.slice(currentIndex, currentIndex + sliceSize);
+      const lastData = stonk.Last.slice(currentIndex, currentIndex + sliceSize);
+      const lowData = stonk.Low.slice(currentIndex, currentIndex + sliceSize);
+
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = openData;
+      chart.data.datasets[1].data = lastData;
+      chart.data.datasets[2].data = lowData;
+
+      chart.update();
+    }
+
+    function animateChart() {
+      if (currentIndex + sliceSize <= totalDataPoints) {
+        updateChartData();
+        updatePrice();
+        currentIndex++;
       }
+    }
 
-      // Listen for balance updates and update the UI accordingly
-      ipcRenderer.on('balance-updated', (event, { balance, sharesOwned }) => {
+    let fps = 10;
+    let fpsInterval = 1000 / fps;
+    let then = Date.now();
+
+    function startAnimating() {
+      requestAnimationFrame(animate);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const now = Date.now();
+      const elapsed = now - then;
+
+      if (elapsed > fpsInterval) {
+        then = now - (elapsed % fpsInterval);
+        animateChart();
+      }
+    }
+
+    //methods for event listeners
+    
+    slice.addEventListener('input', ()=>
+    {
+      sliceSize = slice.value;
+      sliceValue.innerText = sliceSize;
+
+    });
+
+    slider.addEventListener('input', () => {
+      fps = slider.value;
+      speedValue.innerText = fps;
+      fpsInterval = 1000 / fps; // Update FPS interval
+    });
+
+    startAnimating();
+
+    function purchaseStock() {
+      const sharesToBuy = parseInt(document.getElementById('sharesToBuy').value, 10);
+      ipcRenderer.send('purchase-stock', { sharesToBuy, price: currentPrice });
+    }
+
+    function sellStock() {
+      const sharesToSell = parseInt(document.getElementById('sharesToBuy').value, 10);
+      ipcRenderer.send('sell-stock', { sharesToSell, price: currentPrice });
+    }
+
+    function goToMenu() {
+      ipcRenderer.send('navigate-to-menu');
+    }
+
+        ipcRenderer.on('balance-updated', (event, { balance, sharesOwned }) => {
         document.getElementById('balance').innerText = balance;
         document.getElementById('sharesOwned').innerText = sharesOwned;
-      });
+    });
 
-      // Listen for error messages
-      ipcRenderer.on('error', (event, message) => {
-        alert(message);
-      });
-
-      // Simulate price updates and animation
-      // function animatePrice() {
-      //   setInterval(() => {
-      //     updatePrice();
-      //     chart.update();
-      //   }, 1000); // Update every second for demonstration
-      // }
-
-      // animatePrice(); // Start the price update animation
-// Variables for animation
-let currentIndex = 0; // Start from the first data point
-const sliceSize = 10; // How many points to show at once in the graph (feel free to change this)
-const totalDataPoints = stonk.Date.length; // Total number of data points in the chart
-
-
-      function updatePrice() {
-  // Make sure we're showing a valid data slice
-  if (currentIndex + sliceSize <= totalDataPoints) {
-    // Get the most recent price from the visible sector (slice) of the data
-    currentPrice = stonk.Last[currentIndex]; // Use the first point in the slice for the current price
-
-    // Update the displayed current price in the UI
-    document.getElementById('currentPrice').innerText = currentPrice;
-  }
-}
-
-// Function to update the chart data with a subset (slice) of the data
-function updateChartData() {
-  const labels = stonk.Date.slice(currentIndex, currentIndex + sliceSize);
-  const openData = stonk.Open.slice(currentIndex, currentIndex + sliceSize);
-  const lastData = stonk.Last.slice(currentIndex, currentIndex + sliceSize);
-  const lowData = stonk.Low.slice(currentIndex, currentIndex + sliceSize);
-
-  // Update the chart's datasets
-  chart.data.labels = labels;
-  chart.data.datasets[0].data = openData;
-  chart.data.datasets[1].data = lastData;
-  chart.data.datasets[2].data = lowData;
-
-  // Update the chart (this triggers the re-render)
-  chart.update();
-}
-
-// Function to animate the chart's data and update the current price
-function animateChart() {
-  // Only update if we haven't reached the end of the data
-  if (currentIndex + sliceSize <= totalDataPoints) {
-    // Update the chart with the next slice of data
-    updateChartData();
-    updatePrice(); // Update the current price based on the current slice of data
-
-    // Increment the current index to show the next slice of data
-    currentIndex++;
-
-    // Call the next frame of the animation loop
-    // requestAnimationFrame(animateChart);
-  }
-}
-
-
-
-// Start the animation loop (start the data scroll)
-animateChart();
-
-
-var stop = false;
-var frameCount = 0;
-// var $results = $("#results");
-var fps, fpsInterval, startTime, now, then, elapsed;
-
-function startAnimating(fps) {
-    fpsInterval = 1000 / fps;
-    then = Date.now();
-    startTime = then;
-    animate();
-}
-
-function animate() {
-
-    // request another frame
-
-    requestAnimationFrame(animate);
-
-    // calc elapsed time since last loop
-
-    now = Date.now();
-    elapsed = now - then;
-
-    // if enough time has elapsed, draw the next frame
-
-    if (elapsed > fpsInterval) {
-
-        // Get ready for next frame by setting then=now, but also adjust for your
-        // specified fpsInterval not being a multiple of RAF's interval (16.7ms)
-        then = now - (elapsed % fpsInterval);
-
-        // Put your drawing code here
-        animateChart();
-
-    }
-}
-
-startAnimating(10)
-
-    </script>
-  </body>
-  </html>
+     
+  </script>
+</body>
+</html>
 `;
+
 
 win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
 
@@ -332,7 +305,7 @@ app.whenReady().then(() => {
   // Handle stock purchase event
   ipcMain.on('purchase-stock', async (event, {  sharesToBuy, price }) => {
     try {
-      console.log(username);
+      console.log(username, "purchases", sharesToBuy );
       const balance = await getBalance(username);
       const totalPrice = sharesToBuy * price;
   
@@ -341,13 +314,17 @@ app.whenReady().then(() => {
         await updateBalance(username, -totalPrice);
         await updateShares(username, 'AAPL', sharesToBuy, 0, price);
         
-        event.sender.send('balance-updated', { balance });
+        // event.sender.send('balance-updated', { balance });
 
         // Now we update the sharesOwned on the server (you'll need an endpoint for this in the API)
          
       // {
           // event.sender.send('error', 'Failed to update shares owned.');
-        
+          const sharesOwned = await getShares(username, "AAPL");  // Use getShares to fetch shares for a stock
+
+          event.sender.send('balance-updated', { balance: balance, sharesOwned: sharesOwned + sharesToBuy });
+          console.log(sharesToBuy)
+
       } else {
         event.sender.send('error', 'Not enough balance to purchase shares.');
       }
@@ -374,8 +351,10 @@ app.whenReady().then(() => {
   
         // Proceed with updating balance and shares
         await updateBalance(username, totalSaleAmount);
-        await updateShares(username, "AAPL", 0, sharesToSell, price);
-  
+        await updateShares(username, "AAPL", 0, sharesOwned - sharesToSell, price);
+
+        const sharesOwned = await getShares(username, "AAPL");  // Use UPDATE SHARES OWNED
+
         // Send the updated balance and shares owned to the renderer
         const updatedBalance = await getBalance(username);
         event.sender.send('balance-updated', { balance: updatedBalance, sharesOwned: sharesOwned - sharesToSell });
