@@ -26,7 +26,7 @@ let sharesOwned;
 // Function to load stock data
 function loadStockData() {
   return new Promise((resolve, reject) => {
-    const filePath = path.join(__dirname, 'assets', 'SHORTHistoricalData_1734413881111.csv');
+    const filePath = path.join(__dirname, 'assets', 'APPLE_HistoricalData_1734412988258.csv');
     const resultsDate =   [];
     const resultsLast =   [];
     const resultsVolume = [];
@@ -130,7 +130,7 @@ function createWindow(page = 'main') {
         <span id="speedValue">10</span> Speed
     
     <label for="rangeSlider">View Range:</label>
-    <input type="range" id="rangeSlider" min="1" max="10" value="2" />
+    <input type="range" id="rangeSlider" min="1" max="256" value="2" />
     <span id="rangeValue">2</span> Range
   </div>
   <script>
@@ -164,6 +164,8 @@ function createWindow(page = 'main') {
     const slice = document.getElementById('rangeSlider');
     sliceValue = document.getElementById('rangeValue');
 
+    let isAnimating = true; // A flag to control animation
+
     function updatePrice() {
       console.log(sliceSize);
       if (currentIndex + sliceSize <= totalDataPoints) {
@@ -173,37 +175,42 @@ function createWindow(page = 'main') {
     }
 
     function updateChartData() {
-      const labels = stonk.Date.slice(currentIndex, currentIndex + sliceSize);
-      const openData = stonk.Open.slice(currentIndex, currentIndex + sliceSize);
-      const lastData = stonk.Last.slice(currentIndex, currentIndex + sliceSize);
-      const lowData = stonk.Low.slice(currentIndex, currentIndex + sliceSize);
+  const labels = stonk.Date.slice(currentIndex, currentIndex + parseInt(sliceSize));
+  const openData = stonk.Open.slice(currentIndex, currentIndex + parseInt(sliceSize));
+  const lastData = stonk.Last.slice(currentIndex, currentIndex + parseInt(sliceSize));
+  const lowData = stonk.Low.slice(currentIndex, currentIndex + parseInt(sliceSize));
 
-      chart.data.labels = labels;
-      chart.data.datasets[0].data = openData;
-      chart.data.datasets[1].data = lastData;
-      chart.data.datasets[2].data = lowData;
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = openData;
+  chart.data.datasets[1].data = lastData;
+  chart.data.datasets[2].data = lowData;
 
-      chart.update();
+  chart.update();
     }
 
     function animateChart() {
-      if (currentIndex + sliceSize <= totalDataPoints) {
-        updateChartData();
-        updatePrice();
-        currentIndex++;
-      }
+     if (!isAnimating) return; // Skip updates if animation is paused
+
+  if (currentIndex + parseInt(sliceSize) <= totalDataPoints) {
+    updateChartData();
+    updatePrice();
+    currentIndex++;
+  } else {
+    isAnimating = false; // stops auto restart !!!
+    currentIndex = 0; // Reset to the start when we reach the end
+  }
     }
 
     let fps = 10;
     let fpsInterval = 1000 / fps;
     let then = Date.now();
 
-    function startAnimating() {
-      requestAnimationFrame(animate);
-    }
+
 
     function animate() {
-      requestAnimationFrame(animate);
+      if (!isAnimating) return; // Stop the animation if the flag is false
+
+      requestAnimationFrame(animate); 
 
       const now = Date.now();
       const elapsed = now - then;
@@ -216,21 +223,26 @@ function createWindow(page = 'main') {
 
     //methods for event listeners
     
-    slice.addEventListener('input', ()=>
-    {
-      sliceSize = slice.value;
-      sliceValue.innerText = sliceSize;
+// Handle the range slider input
+slice.addEventListener('input', () => {
+  isAnimating = false; // Pause animation temporarily
+  sliceSize = parseInt(slice.value); // Update slice size
+  sliceValue.innerText = sliceSize;
+  updateChartData(); // Update the chart with the new slice size
+  isAnimating = true; // Restart animation after update
+});
 
-    });
+// Handle speed slider input
+slider.addEventListener('input', () => {
+  fps = parseInt(slider.value); // Update FPS value
+  speedValue.innerText = fps;
+  fpsInterval = 1000 / fps;
+});
 
-    slider.addEventListener('input', () => {
-      fps = slider.value;
-      speedValue.innerText = fps;
-      fpsInterval = 1000 / fps; // Update FPS interval
-    });
 
-    startAnimating();
+    animate();
 
+    
     function purchaseStock() {
       const sharesToBuy = parseFloat(document.getElementById('sharesToBuy').value);
       ipcRenderer.send('purchase-stock', {  sharesToBuy, price: currentPrice });
