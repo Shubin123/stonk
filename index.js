@@ -277,7 +277,7 @@ win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
   }
 
   mainWindow = win;
-  win.webContents.openDevTools()
+  // win.webContents.openDevTools()
 
 
 }
