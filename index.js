@@ -27,8 +27,10 @@ let sharesOwned;
 function loadStockData() {
   return new Promise((resolve, reject) => {
     const filePath = path.join(__dirname, 'assets', 'INTEL.csv');
+
     const resultsDate =   [];
     const resultsLast =   [];
+
     const resultsVolume = [];
     const resultsOpen =   [];
     const resultsHigh =   [];
@@ -378,8 +380,6 @@ app.whenReady().then(() => {
       chart.data.datasets[0].borderColor = 'red';
       chart.update();
       startGameLoop();
-
-
     `);
   });
 
