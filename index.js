@@ -26,7 +26,7 @@ let sharesOwned;
 // Function to load stock data
 function loadStockData() {
   return new Promise((resolve, reject) => {
-    const filePath = path.join(__dirname, 'assets', 'APPLE_HistoricalData_1734412988258.csv');
+    const filePath = path.join(__dirname, 'assets', 'INTEL.csv');
     const resultsDate =   [];
     const resultsLast =   [];
     const resultsVolume = [];

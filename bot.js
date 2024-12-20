@@ -109,7 +109,7 @@ function runCompetitiveTradingStrategy(data, difficultyLevel) {
 async function simulate() {
     try {
         // Assuming you have historical data in a CSV file
-        const data = await readCSV('./assets/APPLE_HistoricalData_1734412988258.csv');  // Adjust to your data path
+        const data = await readCSV('./assets/INTEL.csv');  // Adjust to your data path
         data.reverse() // the data comes in from present to past need to do this or our assumptions are wrong
         console.log(data)
         // Simulate with different difficulty levels

@@ -72,7 +72,7 @@ function startSimulation(filePath) {
                 return;
             }
 
-            const finalCapital = simulateStrategy(initialCapital, data.reverse(), 12);
+            const finalCapital = simulateStrategy(initialCapital, data.reverse(), 11);
             console.log(`Initial Capital: $${initialCapital}`);
             console.log(`Final Portfolio Value after ${data.length} days: $${finalCapital.toFixed(2)}`);
         }
@@ -80,6 +80,6 @@ function startSimulation(filePath) {
 }
 
 // Specify the path to the CSV file and the number of look-ahead days
-const csvFilePath = './assets/SHORTHistoricalData_1734413881111.csv'; // Adjust this path
+const csvFilePath = './assets/INTEL.csv'; // Adjust this path
 const lookAheadDays = 1; // Days to look ahead
 startSimulation(csvFilePath, lookAheadDays);
