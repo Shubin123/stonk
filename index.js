@@ -17,6 +17,8 @@ let mainWindow;
 let username = "kanye";
 
 let balance = getBalance(username);
+
+let sharesOwned;
 // console.log(balance);
 // updateBalance(username, 25);
 
@@ -24,13 +26,15 @@ let balance = getBalance(username);
 // Function to load stock data
 function loadStockData() {
   return new Promise((resolve, reject) => {
-    const filePath = path.join(__dirname, 'assets', 'INTEL.csv');
-    const resultsDate = [];
-    const resultsLast = [];
+
+    const filePath = path.join(__dirname, 'assets', 'APPLE_HistoricalData_1734412988258.csv');
+    const resultsDate =   [];
+    const resultsLast =   [];
+
     const resultsVolume = [];
-    const resultsOpen = [];
-    const resultsHigh = [];
-    const resultsLow = [];
+    const resultsOpen =   [];
+    const resultsHigh =   [];
+    const resultsLow =    [];
 
     const fileStream = fs.createReadStream(filePath);
     fileStream
@@ -128,13 +132,13 @@ function createWindow(page = 'main') {
         <span id="speedValue">10</span> Speed
     
     <label for="rangeSlider">View Range:</label>
-    <input type="range" id="rangeSlider" min="1" max="10" value="2" />
+    <input type="range" id="rangeSlider" min="1" max="256" value="2" />
     <span id="rangeValue">2</span> Range
   </div>
   <script>
     const { ipcRenderer } = require('electron');
     let stonk = ${JSON.stringify(stock)};
-    let sharesOwned = 0;
+    let sharesOwned =  ${JSON.stringify(sharesOwned)};
     let currentPrice = 0;
     const ctx = document.getElementById('myChart').getContext('2d');
     const chart = new Chart(ctx, {
@@ -162,6 +166,8 @@ function createWindow(page = 'main') {
     const slice = document.getElementById('rangeSlider');
     sliceValue = document.getElementById('rangeValue');
 
+    let isAnimating = true; // A flag to control animation
+
     function updatePrice() {
       console.log(sliceSize);
       if (currentIndex + sliceSize <= totalDataPoints) {
@@ -171,37 +177,42 @@ function createWindow(page = 'main') {
     }
 
     function updateChartData() {
-      const labels = stonk.Date.slice(currentIndex, currentIndex + sliceSize);
-      const openData = stonk.Open.slice(currentIndex, currentIndex + sliceSize);
-      const lastData = stonk.Last.slice(currentIndex, currentIndex + sliceSize);
-      const lowData = stonk.Low.slice(currentIndex, currentIndex + sliceSize);
+  const labels = stonk.Date.slice(currentIndex, currentIndex + parseInt(sliceSize));
+  const openData = stonk.Open.slice(currentIndex, currentIndex + parseInt(sliceSize));
+  const lastData = stonk.Last.slice(currentIndex, currentIndex + parseInt(sliceSize));
+  const lowData = stonk.Low.slice(currentIndex, currentIndex + parseInt(sliceSize));
 
-      chart.data.labels = labels;
-      chart.data.datasets[0].data = openData;
-      chart.data.datasets[1].data = lastData;
-      chart.data.datasets[2].data = lowData;
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = openData;
+  chart.data.datasets[1].data = lastData;
+  chart.data.datasets[2].data = lowData;
 
-      chart.update();
+  chart.update();
     }
 
     function animateChart() {
-      if (currentIndex + sliceSize <= totalDataPoints) {
-        updateChartData();
-        updatePrice();
-        currentIndex++;
-      }
+     if (!isAnimating) return; // Skip updates if animation is paused
+
+  if (currentIndex + parseInt(sliceSize) <= totalDataPoints) {
+    updateChartData();
+    updatePrice();
+    currentIndex++;
+  } else {
+    isAnimating = false; // stops auto restart !!!
+    currentIndex = 0; // Reset to the start when we reach the end
+  }
     }
 
     let fps = 10;
     let fpsInterval = 1000 / fps;
     let then = Date.now();
 
-    function startAnimating() {
-      requestAnimationFrame(animate);
-    }
+
 
     function animate() {
-      requestAnimationFrame(animate);
+      if (!isAnimating) return; // Stop the animation if the flag is false
+
+      requestAnimationFrame(animate); 
 
       const now = Date.now();
       const elapsed = now - then;
@@ -214,28 +225,33 @@ function createWindow(page = 'main') {
 
     //methods for event listeners
     
-    slice.addEventListener('input', ()=>
-    {
-      sliceSize = slice.value;
-      sliceValue.innerText = sliceSize;
+// Handle the range slider input
+slice.addEventListener('input', () => {
+  isAnimating = false; // Pause animation temporarily
+  sliceSize = parseInt(slice.value); // Update slice size
+  sliceValue.innerText = sliceSize;
+  updateChartData(); // Update the chart with the new slice size
+  isAnimating = true; // Restart animation after update
+});
 
-    });
+// Handle speed slider input
+slider.addEventListener('input', () => {
+  fps = parseInt(slider.value); // Update FPS value
+  speedValue.innerText = fps;
+  fpsInterval = 1000 / fps;
+});
 
-    slider.addEventListener('input', () => {
-      fps = slider.value;
-      speedValue.innerText = fps;
-      fpsInterval = 1000 / fps; // Update FPS interval
-    });
 
-    startAnimating();
+    animate();
 
+    
     function purchaseStock() {
-      const sharesToBuy = parseInt(document.getElementById('sharesToBuy').value, 10);
-      ipcRenderer.send('purchase-stock', { sharesToBuy, price: currentPrice });
+      const sharesToBuy = parseFloat(document.getElementById('sharesToBuy').value);
+      ipcRenderer.send('purchase-stock', {  sharesToBuy, price: currentPrice });
     }
 
     function sellStock() {
-      const sharesToSell = parseInt(document.getElementById('sharesToBuy').value, 10);
+      const sharesToSell = parseFloat(document.getElementById('sharesToBuy').value);
       ipcRenderer.send('sell-stock', { sharesToSell, price: currentPrice });
     }
 
@@ -244,6 +260,8 @@ function createWindow(page = 'main') {
     }
 
         ipcRenderer.on('balance-updated', (event, { balance, sharesOwned }) => {
+          console.log(balance)
+
         document.getElementById('balance').innerText = balance;
         document.getElementById('sharesOwned').innerText = sharesOwned;
     });
@@ -261,7 +279,7 @@ win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
   }
 
   mainWindow = win;
-  win.webContents.openDevTools()
+  // win.webContents.openDevTools()
 
 
 }
@@ -288,42 +306,31 @@ app.whenReady().then(() => {
     createWindow('gambling');
   });
 
-  ipcMain.on('update-balance', async (event, { amount }) => {
-    try {
-      // Call the updateBalance function from client.js
-      const response = await updateBalance(username, amount);
-      // After updating the balance, fetch the new balance
-      const updatedBalance = await getBalance(username);
-      // Send the updated balance to the renderer process
-      event.sender.send('balance-updated', { balance: updatedBalance });
-    } catch (error) {
-      console.error('Error updating balance:', error);
-      event.sender.send('error', 'Failed to update balance.');
-    }
-  });
+ 
   
   // Handle stock purchase event
   ipcMain.on('purchase-stock', async (event, {  sharesToBuy, price }) => {
     try {
-      console.log(username, "purchases", sharesToBuy );
-      const balance = await getBalance(username);
+      // console.log(username, "purchases", sharesToBuy );
+      let balance = await getBalance(username);
       const totalPrice = sharesToBuy * price;
   
       if (balance >= totalPrice) {
         // Deduct the balance first
         await updateBalance(username, -totalPrice);
         await updateShares(username, 'AAPL', sharesToBuy, 0, price);
-        
+        let balance = await getBalance(username);
+
         // event.sender.send('balance-updated', { balance });
 
         // Now we update the sharesOwned on the server (you'll need an endpoint for this in the API)
          
       // {
           // event.sender.send('error', 'Failed to update shares owned.');
-          const sharesOwned = await getShares(username, "AAPL");  // Use getShares to fetch shares for a stock
+         let sharesOwned = await getShares(username, "AAPL");  // Use getShares to fetch shares for a stock
 
-          event.sender.send('balance-updated', { balance: balance, sharesOwned: sharesOwned + sharesToBuy });
-          console.log(sharesToBuy)
+          event.sender.send('balance-updated', { balance: balance, sharesOwned: sharesOwned });
+          // console.log(sharesToBuy)
 
       } else {
         event.sender.send('error', 'Not enough balance to purchase shares.');
@@ -338,26 +345,26 @@ app.whenReady().then(() => {
   });
   
   // Handle stock sell event
-  ipcMain.on('sell-stock', async (event, {  sharesToSell, price }) => {
+  ipcMain.on('sell-stock', async (event, { sharesToSell, price }) => {
     try {
-      console.log(username);
   
       // Fetch the number of shares owned by the user
-      const sharesOwned = await getShares(username, "AAPL");  // Use getShares to fetch shares for a stock
-  
+      sharesOwned = await getShares(username, "AAPL");  // Use getShares to fetch shares for a stock
       // Check if the user has enough shares to sell
+      // console.log(sharesOwned, sharesOwned >= sharesToSell);
       if (sharesOwned >= sharesToSell) {
         const totalSaleAmount = sharesToSell * price;
-  
+        
+
         // Proceed with updating balance and shares
         await updateBalance(username, totalSaleAmount);
-        await updateShares(username, "AAPL", 0, sharesOwned - sharesToSell, price);
+        await updateShares(username, "AAPL", -sharesToSell, price);
+        let updatedBalance = await getBalance(username);
+        let updatedShares = await getShares(username, "AAPL");
 
-        const sharesOwned = await getShares(username, "AAPL");  // Use UPDATE SHARES OWNED
 
         // Send the updated balance and shares owned to the renderer
-        const updatedBalance = await getBalance(username);
-        event.sender.send('balance-updated', { balance: updatedBalance, sharesOwned: sharesOwned - sharesToSell });
+        event.sender.send('balance-updated', { balance: updatedBalance, sharesOwned: updatedShares });
       } else {
         event.sender.send('error', 'Not enough shares to sell.');
       }

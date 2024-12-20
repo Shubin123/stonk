@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "build-win":  "electron-packager . stonk --platform=win32 --arch=x64 --out=./dist  --overwrite",
+    "build-mac":  "electron-packager . stonk --platform=darwin --arch=x64 --out=./dist  --overwrite"
+    
   },
   "author": "",
   "license": "ISC",
@@ -15,5 +18,9 @@
     "csv-parse": "^5.6.0",
     "electron": "^33.2.1"
   },
+  "devDependencies": {
+    "electron-packager": "17.1.2"
+  },
+
   "description": ""
 }
