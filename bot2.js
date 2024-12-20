@@ -94,7 +94,6 @@ function startSimulation(filePath) {
     }
 
     const fileContent = fs.readFileSync(filePath, 'utf8');
-
     parse(
         fileContent,
         {
@@ -111,15 +110,15 @@ function startSimulation(filePath) {
                 console.error('The CSV file appears to be empty or invalid.');
                 return;
             }
-
-            const finalCapital = simulateStrategy(initialCapital, data.reverse(), 256);
+            let n = 2000;
+            const finalCapital = simulateStrategy(initialCapital, data.reverse().slice(n), Math.abs(256-n));
             console.log(`Initial Capital: $${initialCapital}`);
-            console.log(`Final Portfolio Value after ${data.length} days: $${finalCapital.toFixed(2)}`);
+            console.log(`Final Portfolio Value after ${data.reverse().slice(n).length} days: $${finalCapital.toFixed(2)}`);
         }
     );
 }
 
 // Specify the path to the CSV file and the number of look-ahead days
-const csvFilePath = './assets/NVIDIA.csv'; // Adjust this path
+const csvFilePath = './assets/APPLE.csv'; // Adjust this path
 const lookAheadDays = 1; // Days to look ahead
 startSimulation(csvFilePath, lookAheadDays);

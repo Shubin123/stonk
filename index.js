@@ -128,7 +128,7 @@ function createWindow(page = 'main') {
   <canvas id="myChart"></canvas>
   <div>
     <label for="speedSlider">Ticker Speed:</label>
-        <input type="range" id="speedSlider" min="1" max="60" value="2" />
+        <input type="range" id="speedSlider" min="1" max="60" value="10" />
         <span id="speedValue">10</span> Speed
     
     <label for="rangeSlider">View Range:</label>
@@ -155,8 +155,8 @@ function createWindow(page = 'main') {
 
     let currentIndex = 0;
     
-    let sliceSize = 10;    
-    let slizeSizeValue = document.getElementById('rangeSlider');
+       
+    // let slizeSizeValue = document.getElementById('rangeSlider');
     const totalDataPoints = stonk.Date.length;
 
     // Add slider event listener
@@ -165,6 +165,7 @@ function createWindow(page = 'main') {
 
     const slice = document.getElementById('rangeSlider');
     sliceValue = document.getElementById('rangeValue');
+    let sliceSize = parseInt(slice.value);
 
     let isAnimating = true; // A flag to control animation
 
@@ -203,12 +204,11 @@ function createWindow(page = 'main') {
   }
     }
 
-    let fps = 10;
+    let fps = 1;
     let fpsInterval = 1000 / fps;
     let then = Date.now();
-
-
-
+    
+    
     function animate() {
       if (!isAnimating) return; // Stop the animation if the flag is false
 
@@ -258,6 +258,7 @@ slider.addEventListener('input', () => {
     function goToMenu() {
       ipcRenderer.send('navigate-to-menu');
     }
+      
 
         ipcRenderer.on('balance-updated', (event, { balance, sharesOwned }) => {
           console.log(balance)
@@ -279,7 +280,7 @@ win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
   }
 
   mainWindow = win;
-  // win.webContents.openDevTools()
+  win.webContents.openDevTools()
 
 
 }
@@ -306,7 +307,6 @@ app.whenReady().then(() => {
     createWindow('gambling');
   });
 
- 
   
   // Handle stock purchase event
   ipcMain.on('purchase-stock', async (event, {  sharesToBuy, price }) => {
@@ -374,7 +374,6 @@ app.whenReady().then(() => {
     }
   });
   
-
   globalShortcut.register('cmd+e', () => {
     mainWindow.webContents.executeJavaScript(`
       chart.data.datasets[0].borderColor = 'red';

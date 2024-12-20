@@ -2,8 +2,8 @@ import { app, BrowserWindow } from 'electron';
 
 function createWindow() {
     const win = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 250,
+        height: 250,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false, // Disable context isolation for simplicity
@@ -63,14 +63,14 @@ const ballCategory = 0x0001;
 const pegCategory = 0x0002;
 
 // Create pegs
-const rows = 8;
-const cols = 12;
+const rows = 5;
+const cols = 5;
 const pegRadius = 15;
 
 const pegs = [];
 for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-        const x = 100 + col * 60 + (row % 2 === 0 ? 30 : 0);
+        const x = 100 + col * 60 + (row % 2 === 0 ? 30 : 0)  + 200;
         const y = 100 + row * 60;
         const peg = Bodies.circle(x, y, pegRadius, {
             isStatic: true,

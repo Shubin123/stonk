@@ -1,7 +1,9 @@
-# on tick basis reload chart with new data
+# on tick basis reload chart with new data done!
     - insert new data done !
     - create tick init done! 
 
-# add sliders to control speed and range of trendlines wip
-# make clear time MARKER indicator 
+# add sliders to control speed and range of trendlines done!
+# make clear time MARKER indicator wip 
 # intergrate bots
+# styling
+# fix/decide on state reload ie: what gets saved when.

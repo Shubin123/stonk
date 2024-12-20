@@ -72,7 +72,7 @@ function startSimulation(filePath) {
                 return;
             }
 
-            const finalCapital = simulateStrategy(initialCapital, data.reverse(), 11);
+            const finalCapital = simulateStrategy(initialCapital, data.reverse(), 256);
             console.log(`Initial Capital: $${initialCapital}`);
             console.log(`Final Portfolio Value after ${data.length} days: $${finalCapital.toFixed(2)}`);
         }
