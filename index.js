@@ -132,7 +132,7 @@ function createWindow(page = 'main') {
         <span id="speedValue">10</span> Speed
     
     <label for="rangeSlider">View Range:</label>
-    <input type="range" id="rangeSlider" min="1" max="256" value="2" />
+    <input type="range" id="rangeSlider" min="1" max="2517" value="2" />
     <span id="rangeValue">2</span> Range
   </div>
   <script>
