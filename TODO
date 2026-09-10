@@ -1,9 +1,11 @@
-# on tick basis reload chart with new data done!
-    - insert new data done !
-    - create tick init done! 
-
-# add sliders to control speed and range of trendlines done!
-# make clear time MARKER indicator wip 
-# intergrate bots
-# styling
-# fix/decide on state reload ie: what gets saved when.
+Completed for the browser release (see SPEC.md and tests/):
+[x] Reload chart on each trading-day tick
+[x] Control replay speed and visible history range
+[x] Show clear current date and time marker
+[x] Integrate causal bots with independent portfolios and standings
+[x] Responsive styling and labeled keyboard controls
+[x] Define save, reload, market-switch, and reset behavior
+[x] Correct transactional cash/share accounting
+[x] Port Mines and Plinko to a static browser app
+[x] Add unit and desktop/mobile browser tests
+[x] Gate GitHub Pages publishing on passing checks

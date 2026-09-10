@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#101717" />
+    <meta
+      name="description"
+      content="Replay market history, practice paper trading, and compete with transparent trading bots. No account needed."
+    />
+    <title>Stonk — The market is your playground</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Stonk home"
+        ><span class="brand-icon">↗</span> stonk<span class="brand-dot"
+          >.</span
+        ></a
+      >
+      <nav aria-label="Main navigation">
+        <button class="nav active" id="market-tab" aria-pressed="true">
+          Market lab</button
+        ><button class="nav" id="arcade-tab" aria-pressed="false">
+          Arcade <span>02</span>
+        </button>
+      </nav>
+      <span class="offline"><i></i> NO REAL MONEY</span>
+    </header>
+    <main>
+      <section id="market-view">
+        <div class="intro">
+          <div>
+            <p class="eyebrow">THE MARKET IS YOUR PLAYGROUND</p>
+            <h1>Hindsight optional.<br /><span>Curiosity required.</span></h1>
+            <p>Replay the market. Make your move. See how you stack up.</p>
+          </div>
+          <div class="intro-note">
+            <span class="asterisk">✳</span>
+            <p>Real historical prices.<br />Entirely imaginary money.</p>
+          </div>
+        </div>
+        <div id="load-error" class="error" role="alert" hidden></div>
+        <div id="loading" role="status">Loading market history…</div>
+        <div id="workspace" hidden>
+          <div class="workspace-heading">
+            <div>
+              <span class="eyebrow">01 / MARKET REPLAY</span
+              ><span class="pill">HISTORICAL DATA</span>
+            </div>
+            <button id="reset" class="text-button">↺ Reset this market</button>
+          </div>
+          <div class="market-layout">
+            <aside class="watchlist panel">
+              <div class="panel-label">YOUR WATCHLIST <span>06</span></div>
+              <div id="markets" aria-label="Markets"></div>
+              <div class="watchlist-note">
+                A fresh $10,000 portfolio for each market. Your progress stays
+                in this browser.
+              </div>
+            </aside>
+            <section class="chart-panel panel" aria-label="Market replay">
+              <div class="quote-header">
+                <div>
+                  <div class="symbol-line">
+                    <h2 id="symbol">INTC</h2>
+                    <span id="company">Intel</span>
+                  </div>
+                  <div class="quote">
+                    <strong id="price">—</strong><span id="change">—</span>
+                  </div>
+                </div>
+                <span class="replay-status" id="replay-status">PAUSED</span>
+              </div>
+              <div class="chart-key">
+                <span class="key close">Close</span
+                ><span class="key open">Open</span
+                ><span class="key low">Low</span
+                ><span class="chart-hint">Only revealed days are shown</span>
+              </div>
+              <svg
+                id="chart"
+                viewBox="0 0 800 300"
+                role="img"
+                aria-label="Historical prices up to the replay date"
+              ></svg>
+              <div class="time-marker">
+                <span><i></i> REPLAY DATE <strong id="date">—</strong></span
+                ><span id="day-count">—</span>
+              </div>
+              <progress
+                id="progress"
+                aria-label="Replay progress"
+                value="1"
+                max="100"
+              ></progress>
+              <div class="replay-controls">
+                <div class="play-controls">
+                  <button id="play" class="primary">▶ Play</button
+                  ><button id="step" title="Advance one trading day">
+                    Step →
+                  </button>
+                </div>
+                <label
+                  >Speed <output id="speed-value">2 days/s</output
+                  ><input
+                    id="speed"
+                    type="range"
+                    min="1"
+                    max="20"
+                    value="2" /></label
+                ><label
+                  >View <output id="range-value">60 days</output
+                  ><input
+                    id="range"
+                    type="range"
+                    min="10"
+                    max="250"
+                    step="10"
+                    value="60"
+                /></label>
+              </div>
+            </section>
+            <aside class="order-panel panel">
+              <div class="panel-label">YOUR PORTFOLIO <span>↗</span></div>
+              <p class="muted">Total equity</p>
+              <strong class="equity" id="equity">$10,000.00</strong>
+              <p id="return" class="positive">+$0.00 (0.00%)</p>
+              <div class="account-details">
+                <div>Available cash <strong id="cash">$10,000.00</strong></div>
+                <div>Shares held <strong id="shares">0</strong></div>
+              </div>
+              <hr />
+              <h3>Make your move</h3>
+              <label for="quantity">Number of shares</label>
+              <div class="quantity-row">
+                <input
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="1"
+                  inputmode="numeric"
+                /><button id="max" class="text-button">Max</button>
+              </div>
+              <div class="estimate">
+                Order estimate <strong id="estimate">—</strong>
+              </div>
+              <div class="trade-actions">
+                <button id="buy" class="primary">Buy shares ↗</button
+                ><button id="sell">Sell shares ↙</button>
+              </div>
+              <p id="order-message" role="status" class="order-message">
+                Orders fill at the current close.
+              </p>
+              <span id="save-status" class="save-status"
+                >Saved on this device</span
+              >
+            </aside>
+          </div>
+          <div class="lower-layout">
+            <section class="panel leaderboard">
+              <div class="section-title">
+                <div>
+                  <p class="eyebrow">A LITTLE FRIENDLY COMPETITION</p>
+                  <h2>You vs. the bots</h2>
+                </div>
+                <span class="pill">SAME STARTING CASH</span>
+              </div>
+              <div id="leaderboard"></div>
+              <p class="fine-print">
+                Bots act automatically as you advance. Signals use past closes
+                and fill at the next open. Each strategy trades whole shares
+                with no fees or slippage.
+              </p>
+            </section>
+            <section class="panel journal">
+              <div class="section-title">
+                <div>
+                  <p class="eyebrow">EVERY MOVE COUNTS</p>
+                  <h2>Trade journal</h2>
+                </div>
+                <span id="order-count" class="pill">0 ORDERS</span>
+              </div>
+              <div id="orders"></div>
+            </section>
+          </div>
+          <details class="methodology">
+            <summary>How the lab works & data limitations</summary>
+            <p>
+              This is a local paper-trading sandbox using the repository’s
+              historical Nasdaq CSV exports, ending in December 2024. Prices are
+              source values, may be unadjusted for splits and dividends, and are
+              rounded to cents for fills. Results exclude fees, slippage, taxes,
+              dividends, and corporate actions; discontinuities can distort
+              comparisons. These are toy strategies, not forecasts.
+            </p>
+            <p>
+              You trade at the currently revealed close. Trend follower buys
+              when the 5 day average exceeds the 20 day average and exits when
+              it falls below. Dip buyer buys 3% below the 20 day average and
+              exits at that average or after a 10% decline from its entry. Both
+              use the previous day’s signal and the next day’s opening price.
+              Buy & hold buys at the first close. The final day remains
+              available for manual trades.
+            </p>
+            <p>
+              Cash, positions, replay day, and bot progress are restored per
+              market. Playback always resumes paused. Reset clears only the
+              selected market. Arcade credits are separate and reset when the
+              page reloads.
+            </p>
+          </details>
+        </div>
+      </section>
+      <section id="arcade-view" hidden>
+        <div class="intro">
+          <div>
+            <p class="eyebrow">TAKE A MARKET BREAK</p>
+            <h1>A little chance.<br /><span>A lot of play.</span></h1>
+            <p>
+              Two small experiments. One separate balance of pretend credits.
+            </p>
+          </div>
+          <div class="arcade-balance">
+            PLAY CREDITS<strong id="credits">1,000</strong
+            ><button id="refill">Reset arcade</button>
+          </div>
+        </div>
+        <div class="arcade-layout">
+          <section class="panel game">
+            <p class="eyebrow">01 / MINES</p>
+            <h2>Find your lucky streak.</h2>
+            <p class="muted">
+              Reveal gems. Avoid mines. Collect before you hit one.
+            </p>
+            <div class="game-inputs">
+              <label
+                >Stake<input
+                  id="mine-stake"
+                  type="number"
+                  min="1"
+                  max="1000"
+                  step="1"
+                  value="10" /></label
+              ><label
+                >Mines<select id="mine-count">
+                  <option>1</option>
+                  <option selected>3</option>
+                  <option>5</option>
+                  <option>10</option>
+                  <option>24</option>
+                </select></label
+              >
+            </div>
+            <div
+              id="mine-grid"
+              class="mine-grid"
+              aria-label="Mines board"
+            ></div>
+            <div class="trade-actions">
+              <button id="mine-start" class="primary">Start round</button
+              ><button id="mine-collect" disabled>Collect</button>
+            </div>
+            <p id="mine-message" role="status">
+              25 tiles. Choose your first move.
+            </p>
+            <p class="fine-print">
+              Payout = stake × 0.97 ÷ probability of surviving all revealed
+              tiles, rounded down. All safe tiles collect automatically.
+            </p>
+          </section>
+          <section class="panel game">
+            <p class="eyebrow">02 / PLINKO</p>
+            <h2>Let the chips fall.</h2>
+            <p class="muted">
+              Eight left-or-right bounces. Where will you land?
+            </p>
+            <svg
+              id="plinko-board"
+              viewBox="0 0 500 340"
+              role="img"
+              aria-label="Plinko board with eight rows of pegs"
+            ></svg>
+            <div id="plinko-bins" class="plinko-bins"></div>
+            <div class="game-inputs">
+              <label
+                >Stake<input
+                  id="plinko-stake"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value="10" /></label
+              ><button id="drop" class="primary">Drop a ball ↓</button>
+            </div>
+            <p id="plinko-message" role="status">
+              Every bounce has an equal left or right chance.
+            </p>
+            <p class="fine-print">
+              Displayed multipliers include your stake. This is a probability
+              experiment with play credits; no purchases or withdrawals.
+            </p>
+          </section>
+        </div>
+      </section>
+      <footer>
+        <span class="brand small">stonk.</span
+        ><span>Made for curious minds. Play money only.</span
+        ><a href="https://github.com/Shubin123/stonk">View the source ↗</a>
+      </footer>
+    </main>
+    <dialog id="reset-dialog">
+      <h2>Start this market over?</h2>
+      <p>Your trades and replay progress for this market will be cleared.</p>
+      <div class="trade-actions">
+        <button id="cancel-reset">Keep playing</button
+        ><button id="confirm-reset" class="primary">Reset market</button>
+      </div>
+    </dialog>
+  </body>
+</html>

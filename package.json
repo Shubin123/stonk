@@ -1,26 +1,23 @@
 {
   "name": "stonk",
-  "version": "1.0.0",
-  "main": "index.js",
+  "version": "2.0.0",
+  "private": true,
   "type": "module",
+  "description": "A historical market replay sandbox with paper trading, causal bots, and a play-credit arcade.",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron .",
-    "build-win":  "electron-packager . stonk --platform=win32 --arch=x64 --out=./dist  --overwrite",
-    "build-mac":  "electron-packager . stonk --platform=darwin --arch=x64 --out=./dist  --overwrite",
-    "start-plinko": "electron plinko"
+    "start": "npm run build && npm run preview",
+    "build": "node scripts/build.js",
+    "preview": "node scripts/serve.js",
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test",
+    "check": "npm test && npm run build && npm run test:e2e",
+    "format": "prettier --check \"web/*.{js,css,html}\" \"scripts/*.js\" \"tests/**/*.js\" playwright.config.js"
   },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "chart.js": "^4.4.7",
-    "csv-generate": "^4.4.2",
-    "csv-parse": "^5.6.0",
-    "electron": "^33.2.1"
+  "engines": {
+    "node": ">=22"
   },
   "devDependencies": {
-    "electron-packager": "17.1.2"
-  },
-
-  "description": ""
+    "@playwright/test": "^1.63.0",
+    "prettier": "^3.9.6"
+  }
 }
